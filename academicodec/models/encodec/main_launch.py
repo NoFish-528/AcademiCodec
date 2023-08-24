@@ -39,7 +39,7 @@ def getModelSize(model):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--local_rank',
+        '--local-rank',
         default=-1,
         type=int,
         help='node rank for distributed training')
@@ -102,12 +102,14 @@ def get_args():
     parser.add_argument(
         '--train_data_path',
         type=str,
+        nargs='*',
         # default='/apdcephfs_cq2/share_1297902/speech_user/shaunxliu/dongchao/code4/InstructTTS2/data_process/soundstream_data/train16k.lst', 
         default="/apdcephfs_cq2/share_1297902/speech_user/shaunxliu/data/codec_data_24k/train_valid_lists/train.lst",
         help='training data')
     parser.add_argument(
         '--valid_data_path',
         type=str,
+        nargs='*',
         # default='/apdcephfs_cq2/share_1297902/speech_user/shaunxliu/dongchao/code4/InstructTTS2/data_process/soundstream_data/val16k.lst', 
         default="/apdcephfs_cq2/share_1297902/speech_user/shaunxliu/data/codec_data_24k/train_valid_lists/valid_256.lst",
         help='validation data')
@@ -130,6 +132,12 @@ def get_args():
         # default for 16k_320d
         default=[1, 1.5, 2, 4, 6, 12],
         help='target_bandwidths of net3.py')
+    parser.add_argument(
+        '--lr',
+        type=float,
+        default=3e-4,
+        help="learning rate"
+    )
     args = parser.parse_args()
     time_str = time.strftime('%Y-%m-%d-%H-%M')
     if args.resume:
@@ -237,13 +245,13 @@ def main_worker(local_rank, args):
         sampler=valid_sampler)
     logger.log_info("Build optimizers and lr-schedulers")
     optimizer_g = torch.optim.AdamW(
-        soundstream.parameters(), lr=3e-4, betas=(0.5, 0.9))
+        soundstream.parameters(), lr=args.lr, betas=(0.5, 0.9))
     lr_scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
         optimizer_g, gamma=0.999)
     optimizer_d = torch.optim.AdamW(
         itertools.chain(stft_disc.parameters(),
                         msd.parameters(), mpd.parameters()),
-        lr=3e-4,
+        lr=args.lr,
         betas=(0.5, 0.9))
     lr_scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
         optimizer_d, gamma=0.999)
